@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ETree
+from xml.dom import minidom
 from fractions import Fraction
 
 
@@ -17,6 +18,7 @@ note_value = {
 
 class MusicxmlReader:
     def __init__(self, filepath):
+        self.filepath = filepath
         # Load the musicxml file
         tree = ETree.parse(filepath)
         root = tree.getroot()
@@ -43,5 +45,35 @@ class MusicxmlReader:
                     print(pitch, str(Fraction(duration/div)))
                 except AttributeError:
                     pass
+
+    from xml.dom import minidom
+
+    def get_beat(self):
+        xmldoc = minidom.parse(self.filepath)
+        divisions = int(xmldoc.getElementsByTagName('divisions')[0].childNodes[0].nodeValue)
+        beats = {}
+        for part in xmldoc.getElementsByTagName('part'):
+            beats[part.getAttribute('id')] = []
+            for note in part.getElementsByTagName('note'):
+                if note.getElementsByTagName('rest'):
+                    continue
+                duration = int(note.getElementsByTagName('duration')[0].childNodes[0].nodeValue)
+                beat = float(duration) / divisions
+                beats[part.getAttribute('id')].append(beat)
+        return beats
+
+    def get_start_beat(self):
+        beats = self.get_beat()
+        start_beats = {}
+        for part in beats:
+            start_beats[part] = []
+            start_beat = 0
+            for beat in beats[part]:
+                start_beats[part].append(start_beat)
+                start_beat += beat
+        print(start_beats)
+        return start_beats
+
+
 
 

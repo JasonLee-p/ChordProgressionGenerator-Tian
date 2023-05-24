@@ -65,16 +65,9 @@ def title(title_text_var, bg_colour):
     return _title
 
 
-# def button(master, expand, belonging, hit_func, text, font_size, side, width):
-#     b = tk.Button(master, text=text, font=(FONT0, font_size), width=width, height=1, command=hit_func)
-#     b.pack(side=side, padx=5, pady=4, expand=expand)
-#     if belonging:
-#         belonging.append(b)
-
-
 def button(master, expand, belonging, hit_func, text, side, width):
     BTStyle = ttk.Style()
-    BTStyle.configure('TButton', borderradius=10, font=(FONT0, FONT_SIZE))
+    BTStyle.configure('TButton', borderradius=5, font=(FONT0, FONT_SIZE))
     b = ttk.Button(master, text=text, width=width, command=hit_func, style='TButton')
     b.configure()
     b.pack(side=side, padx=5, pady=4, expand=expand)
@@ -82,59 +75,8 @@ def button(master, expand, belonging, hit_func, text, side, width):
         belonging.append(b)
 
 
-def result_frame(master, belonging, handler):
-    f2 = tk.Frame(master, padx=0, pady=0, bg='ivory')
-    f1 = tk.Frame(master, padx=0, pady=4, bg='ivory')
-    f2.pack(side="bottom", fill="both")
-    f1.pack(side="bottom", fill="both")
-    if belonging:
-        belonging.append(f1)
-        belonging.append(f2)
-
-    v_text_var = tk.StringVar()
-    a_text_var = tk.StringVar()
-    title(v_text_var, BG_COLOUR)(
-        belonging, f1, position="left", expand=False, font_size=12, wid=29, hei=1, padx=0)
-    title(a_text_var, BG_COLOUR)(
-        belonging, f1, position="right", expand=False, font_size=12, wid=29, hei=1, padx=0)
-    v_text_var.set("Video result:")
-    a_text_var.set("Audio result:")
-    #
-    title(handler.result_text_var0, BG_COLOUR)(
-        belonging, f2, position="left", expand=False, font_size=20, wid=18, hei=1, padx=0)
-    title(handler.result_text_var1, BG_COLOUR)(
-        belonging, f2, position="right", expand=False, font_size=20, wid=18, hei=1, padx=0)
-
-
-def mode_frame(master, belonging, side, hit_func):
-    # frame1
-    f = tk.Frame(master=master, padx=10, pady=4, bg='ivory')
-    f.pack(side=side, fill='both')
-    if belonging:
-        belonging.append(f)
-    # 输出字符变量
-    text_var_mode = tk.StringVar()
-    title(text_var_mode, BG_COLOUR)(
-        belonging, f, position="left", expand=False, font_size=FONT_SIZE, wid=12, hei=1, padx=5, ipady=3)
-    text_var_mode.set("Mode:")
-    combox(f, None, hit_func, ['chord', 'note', 'both']).current(0)
-    return f
-
-
-def bottoms_top_frame(master, belonging):
-    f = tk.Frame(master=master, padx=10, pady=5, bg='ivory')
-    f.pack(side="top", fill='both')
-    if belonging:
-        belonging.append(f)
-    text_var_mode = tk.StringVar()
-    title(text_var_mode, BG_COLOUR)(
-        belonging, f, position="left", expand=False, font_size=FONT_SIZE, wid=12, hei=1, padx=5, ipady=3)
-    text_var_mode.set("  Select Score:  ")
-    return f
-
-
 # 定义下拉选择框
-def combox(master, belonging, selected_func, values, position='left', width=19, height=5, style_name=None):
+def combox(master, belonging, selected_func, values, position='basic', width=19, height=5, style_name=None):
     text_var = tk.StringVar()
     cb = ttk.Combobox(
         master, textvariable=text_var, state='readonly',
@@ -162,7 +104,7 @@ def logging_f(master):
     TVStyle.configure('Treeview', rowheight=45, font=(FONT0, 12))
     VScroll1 = tk.Scrollbar(
         master, relief='flat', troughcolor=BG_COLOUR, width=30, orient='vertical')
-    VScroll1.pack(side='right', fill='y', padx=0)
+    VScroll1.pack(side='basic', fill='y', padx=0)
     table = ttk.Treeview(
         master=master,  # 父容器
         height=20,  # 表格显示的行数,height行
@@ -219,9 +161,9 @@ class PianoRollCV:
         self.keyIndex2midi = dict(zip(range(1, 89), range(108, 19, -1)))
         self.midi2keyIndex = dict(zip(range(108, 19, -1), range(1, 89)))
         self.key_height = 12
-        self.bw = 50
-        self.width = 3000
-        self.canvas = tk.Canvas(master=master, height=220, bg=BG_COLOUR, bd=0)
+        self.bw = 25
+        self.width = 200
+        self.canvas = tk.Canvas(master=master, height=700, bg=BG_COLOUR, bd=0)
         self.top_sb = tk.Scrollbar(
             master, relief='raised', troughcolor=BG_COLOUR, width=15, orient='horizontal',
             command=self.canvas.xview
@@ -259,7 +201,7 @@ class PianoRollCV:
         _f.pack(side='top', fill='x', padx=0)
         # TODO: 钢琴
         self.canvas.create_window((0, 0), window=self.cvFrame, anchor='nw')
-        self.canvas.pack(side='left', padx=20, fill='both')
+        self.canvas.pack(side='top', padx=20, fill='both')
 
         def rolling_func(ent):
             self.canvas.configure(
@@ -276,6 +218,11 @@ class PianoRollCV:
         self.cvFrame.bind_all("<Shift-MouseWheel>", self.cv_mousewheel)  # 绑定shift
         self.cvFrame.bind_all("<Control-MouseWheel>", self.cv_mousewheel)  # 绑定Ctrl
         master.update()
+
+    # def change_beat(self, q):
+    #     while True:
+    #         self.width = q.get() * self.bw
+    #         self.cvFrame.configure(width=self.width)
 
     def enter_func(self, ent):
         self.MouseState = 'in'
@@ -340,7 +287,12 @@ class CPGCanvas:
         # print("c")
         self.LButtonState.set(1)
         self.X.set(ent.x)
-        self.Y.set(ent.y)
+        if self.cv.winfo_height() - 45 > ent.y > 45:
+            self.Y.set(ent.y)
+        elif ent.y > self.cv.winfo_height() - 45:
+            self.Y.set(self.cv.winfo_height() - 45)
+        elif ent.y < 45:
+            self.Y.set(45)
 
     def onLeftButtonMove(self, ent):
         if self.LButtonState.get() == 0:
@@ -352,20 +304,37 @@ class CPGCanvas:
             #     pass
             self.cv.delete(self.lastline)
             self.lastline = self.cv.create_line(
-                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=4)
-        elif ent.x > self.X.get() and self.T >= 10:
-            self.lastline = self.cv.create_line(
-                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=4)
-            self.X.set(ent.x)
-            self.Y.set(ent.y)
+                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+        elif ent.x > self.X.get() and self.T >= 6:
+            if ent.x < self.cv.winfo_width() - 45:
+                if self.cv.winfo_height() - 45 > ent.y > 45:
+                    self.lastline = self.cv.create_line(
+                        self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+                    self.Y.set(ent.y)
+                elif ent.y > self.cv.winfo_height() - 45:
+                    self.lastline = self.cv.create_line(
+                        self.X.get(), self.Y.get(), ent.x, self.cv.winfo_height() - 45,
+                        fill=self.LINE_COLOR, width=4, tags='draw')
+                    self.Y.set(self.cv.winfo_height() - 45)
+                elif ent.y < 45:
+                    self.lastline = self.cv.create_line(
+                        self.X.get(), self.Y.get(), ent.x, 45, fill=self.LINE_COLOR, width=3,
+                        tags='draw')
+                    self.Y.set(45)
+                self.X.set(ent.x)
+            else:
+                self.lastline = self.cv.create_line(
+                    self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+                self.LButtonState.set(0)
+            self.all_lines.append(self.lastline)
             self.T = 0
         self.T += 1
         # print(f"{self.X.get()}, {self.Y.get()}")
 
     def onLeftButtonUp(self, ent):
-        if ent.x > self.X.get():
+        if self.X.get() < ent.x < self.cv.winfo_width() - 45:
             self.lastline = self.cv.create_line(
-                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=6)
+                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
             self.LButtonState.set(0)
             self.all_lines.append(self.lastline)
 
@@ -406,11 +375,11 @@ class EntryBoxMouseWheel:
     def mouse_wheel_change(self, ent):
         num = int(ent.widget.get())
         if ent.delta > 0 and num < self.range[1]:
-            ent.widget.delete(0, 'all_lines')
+            ent.widget.delete(0, 'end')
             ent.widget.insert(0, str(num + 1))
             self.q.put(str(num + 1))
         if ent.delta <= 0 and num > self.range[0]:
-            ent.widget.delete(0, 'all_lines')
+            ent.widget.delete(0, 'end')
             ent.widget.insert(0, str(num - 1))
             self.q.put(str(num - 1))
         if num <= self.range[0] or num >= self.range[1]:
@@ -424,9 +393,9 @@ class EntryBoxMouseWheel:
                 self.get = entry_num
                 self.q.put(entry_num)
             else:
-                ent.widget.delete(0, 'all_lines')
+                ent.widget.delete(0, 'end')
         except ValueError:
-            ent.widget.delete(0, 'all_lines')
+            ent.widget.delete(0, 'end')
 
 
 if __name__ == "__main__":
