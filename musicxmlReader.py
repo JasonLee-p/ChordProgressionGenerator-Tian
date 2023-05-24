@@ -43,3 +43,5 @@ class MusicxmlReader:
                     print(pitch, str(Fraction(duration/div)))
                 except AttributeError:
                     pass
+
+

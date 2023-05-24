@@ -7,12 +7,14 @@ import json
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+# from tkinter import filedialog
 import os
 
 BG_COLOUR = 'Beige'  # 背景色
 FONT0 = 'microsoft yahei'
-FONTT = 'microsoft yahei'
+FONT1 = 'microsoft yahei'
 FONT_SIZE = 12
+FONT_SIZE2 = 10
 own_path = os.path.dirname(__file__)
 
 
@@ -38,7 +40,7 @@ def main_title(master, text, side):
         master,
         text=text,  # 标签的文字
         bg=BG_COLOUR,  # 标签背景颜色
-        font=(FONTT, 11),  # 字体和字体大小
+        font=(FONT1, 11),  # 字体和字体大小
         width=30, height=1)  # 标签长宽
     title_v.pack(side=side, pady=0, expand=False, anchor='center')  # 固定窗口位置
     tk.Frame(master=master, bg=BG_COLOUR, height=6).pack(side='top', fill='x')
@@ -70,9 +72,11 @@ def title(title_text_var, bg_colour):
 #         belonging.append(b)
 
 
-def button(master, expand, belonging, hit_func, text, side, width, style_name):
-    b = ttk.Button(master, text=text, width=width, command=hit_func)
-    b.configure(style=style_name)
+def button(master, expand, belonging, hit_func, text, side, width):
+    BTStyle = ttk.Style()
+    BTStyle.configure('TButton', borderradius=10, font=(FONT0, FONT_SIZE))
+    b = ttk.Button(master, text=text, width=width, command=hit_func, style='TButton')
+    b.configure()
     b.pack(side=side, padx=5, pady=4, expand=expand)
     if belonging:
         belonging.append(b)
@@ -168,7 +172,7 @@ def logging_f(master):
         yscrollcommand=VScroll1.set
     )
 
-    def treeviewClick(event):  # 单击
+    def treeviewClick(ent):  # 单击
         print('单击')
         for item in table.selection():
             item_text = table.item(item, "values")
@@ -208,7 +212,7 @@ def treeview_sort_column(treeview, column, reverse):  # Treeview、列名、排�
     treeview.heading(column, command=lambda: treeview_sort_column(treeview, column, not reverse))  # 重写标题，使之成为再点倒序的标题
 
 
-class CPGCanvas:
+class PianoRollCV:
     def __init__(self, master):
         self.MouseState = 'out'
         self.piano_keys_frames = []
@@ -216,6 +220,7 @@ class CPGCanvas:
         self.midi2keyIndex = dict(zip(range(108, 19, -1), range(1, 89)))
         self.key_height = 12
         self.bw = 50
+        self.width = 3000
         self.canvas = tk.Canvas(master=master, height=220, bg=BG_COLOUR, bd=0)
         self.top_sb = tk.Scrollbar(
             master, relief='raised', troughcolor=BG_COLOUR, width=15, orient='horizontal',
@@ -227,11 +232,11 @@ class CPGCanvas:
         )  # 定义水平滚动条
         self.left_sb.pack(side='left', fill='y')
         self.top_sb.pack(side='top', fill='x')  # 放置垂直滚动条在顶部,占满x轴
-        self.cvFrame = tk.Frame(self.canvas, height=90 * (self.key_height + 1), width=3000)  # 画布滚动区域
+        self.cvFrame = tk.Frame(self.canvas, height=90 * (self.key_height + 1), width=self.width)  # 画布滚动区域
         self.cvFrame.propagate(0)
         self.piano_keys_frames.append(
-             f_ := tk.Frame(self.cvFrame, bg=BG_COLOUR, height=self.key_height, bd=0))
-        f_.pack(side='top', fill='x', padx=2)
+            f_ := tk.Frame(self.cvFrame, bg=BG_COLOUR, height=self.key_height, bd=0))
+        f_.pack(side='top', fill='x', padx=0)
         # # 绘制分割线
         # for j in range(1, 3000 // self.bw + 1):
         #     tk.Frame(self.cvFrame, bg='#222222', width=1, height=1000).place(
@@ -240,33 +245,28 @@ class CPGCanvas:
         for i in range(88):
             if i % 12 in [0, 1, 3, 5, 7, 8, 10]:
                 wk = tk.Frame(self.cvFrame, bg='#555555', height=self.key_height, bd=0)
-                wk.pack(side='top', fill='x', padx=2)
+                wk.pack(side='top', fill='x', padx=0)
                 self.piano_keys_frames.append(wk)
             else:
                 bk = tk.Frame(self.cvFrame, bg='#464646', height=12, bd=0)
-                bk.pack(side='top', fill='x', padx=2)
+                bk.pack(side='top', fill='x', padx=0)
                 self.piano_keys_frames.append(bk)
             tk.Frame(self.cvFrame, bg='#222222', height=1, bd=0).pack(
-                side='top', fill='x', padx=2)
+                side='top', fill='x', padx=0)
 
         self.piano_keys_frames.append(
             _f := tk.Frame(self.cvFrame, bg=BG_COLOUR, height=self.key_height, bd=0))
-        _f.pack(side='top', fill='x', padx=2)
-        # self.score_preview0 = tk.Frame(master=self.cvFrame, bg=BG_COLOUR, bd=0)  # 标尺层
-        # self.score_preview1 = tk.Frame(master=self.cvFrame, bg=BG_COLOUR, bd=0)  # 乐谱层
-        # self.score_preview2 = tk.Frame(master=self.cvFrame, bg=BG_COLOUR, bd=0)  # 乐谱层
+        _f.pack(side='top', fill='x', padx=0)
+        # TODO: 钢琴
         self.canvas.create_window((0, 0), window=self.cvFrame, anchor='nw')
-        # self.score_preview0.pack(side='top')
-        # self.score_preview1.pack(side='top')
-        # self.score_preview2.pack(side='top')
         self.canvas.pack(side='left', padx=20, fill='both')
 
-        def rolling_func(event):
+        def rolling_func(ent):
             self.canvas.configure(
                 xscrollcommand=self.top_sb.set,
                 yscrollcommand=self.left_sb.set,
-                scrollregion=(0, 0, 3000, 90 * (self.key_height + 1)),  # TODO:
-                width=3000  # TODO:
+                scrollregion=(0, 0, self.width, 90 * (self.key_height + 1)),  # TODO:
+                width=self.width  # TODO:
             )
 
         self.canvas.bind("<Configure>", rolling_func)  # 绑定滚动条
@@ -295,7 +295,7 @@ class CPGCanvas:
                     self.key_height += 1
                 for key_f in self.piano_keys_frames:
                     key_f.configure(height=self.key_height)
-                    self.canvas.configure(scrollregion=(0, 0, 3000, 90 * (1 + self.key_height)))
+                    self.canvas.configure(scrollregion=(0, 0, self.width, 90 * (1 + self.key_height)))
                     self.cvFrame.configure(height=90 * (1 + self.key_height))
                 if self.key_height <= 7:
                     self.key_height = 8
@@ -316,6 +316,117 @@ class CPGCanvas:
             tk.Frame(self.piano_keys_frames[keyI], bg='burlywood',
                      width=duration * self.bw - 1, height=40).place(
                 x=start_beat * self.bw, y=0)
+
+
+class CPGCanvas:
+    def __init__(self, master):
+        self.cv = tk.Canvas(master=master, bg="ivory", bd=0)
+        self.cv.bind('<Button-1>', self.onLeftButtonDown)
+        self.cv.bind('<B1-Motion>', self.onLeftButtonMove)
+        self.cv.bind('<ButtonRelease-1>', self.onLeftButtonUp)
+        self.cv.bind('<ButtonRelease-3>', self.onRightButtonUp)
+        self.cv.pack(fill='both', expand=True, pady=15, padx=15)
+        self.LButtonState = tk.IntVar(value=0)
+        self.X = tk.IntVar(value=0)
+        self.Y = tk.IntVar(value=0)
+        self.T = 5
+        self.LINE_COLOR = 'black'
+        self.lastline = 0
+        self.all_lines = []
+        self.size = "20"
+        self.Mode = 'dot'
+
+    def onLeftButtonDown(self, ent):
+        # print("c")
+        self.LButtonState.set(1)
+        self.X.set(ent.x)
+        self.Y.set(ent.y)
+
+    def onLeftButtonMove(self, ent):
+        if self.LButtonState.get() == 0:
+            return
+        if self.Mode == 'line':
+            # try:
+            #     self.cv.delete(self.lastline)
+            # except Exception:
+            #     pass
+            self.cv.delete(self.lastline)
+            self.lastline = self.cv.create_line(
+                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=4)
+        elif ent.x > self.X.get() and self.T >= 10:
+            self.lastline = self.cv.create_line(
+                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=4)
+            self.X.set(ent.x)
+            self.Y.set(ent.y)
+            self.T = 0
+        self.T += 1
+        # print(f"{self.X.get()}, {self.Y.get()}")
+
+    def onLeftButtonUp(self, ent):
+        if ent.x > self.X.get():
+            self.lastline = self.cv.create_line(
+                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=6)
+            self.LButtonState.set(0)
+            self.all_lines.append(self.lastline)
+
+    def onRightButtonUp(self, ent):
+        pass
+
+
+class EntryBoxMouseWheel:
+    def __init__(self, master, belonging, position, font, width, default,
+                 setRange: list, touch_func=None, msWheel_func=None, _queue=None):
+        self.get = default
+        EStyle = ttk.Style()
+        EStyle.configure('TEntry', borderradius=10)
+        self.box = ttk.Entry(master, justify="center", font=font, width=width, style='TEntry')
+        self.box.pack(side=position, expand=0)
+        self.box.insert(0, default)
+        if _queue:
+            self.q = _queue
+            self.q.put(default)
+        if touch_func:
+            self.box.bind("<Return>", touch_func)
+            self.box.bind("<Button-1>", touch_func)
+            self.box.bind("<Leave>", touch_func)
+            # self.box.bind("<Enter>", touch_func)
+        else:
+            self.range = setRange
+            self.box.bind("<Return>", self.get_beat)
+            self.box.bind("<Enter>", self.get_beat)
+            self.box.bind("<Button-1>", self.get_beat)
+            self.box.bind("<Leave>", self.get_beat)
+        if msWheel_func:
+            self.box.bind("<MouseWheel>", msWheel_func)
+        else:
+            self.box.bind("<MouseWheel>", self.mouse_wheel_change)
+        if belonging:
+            belonging.append(self.box)
+
+    def mouse_wheel_change(self, ent):
+        num = int(ent.widget.get())
+        if ent.delta > 0 and num < self.range[1]:
+            ent.widget.delete(0, 'all_lines')
+            ent.widget.insert(0, str(num + 1))
+            self.q.put(str(num + 1))
+        if ent.delta <= 0 and num > self.range[0]:
+            ent.widget.delete(0, 'all_lines')
+            ent.widget.insert(0, str(num - 1))
+            self.q.put(str(num - 1))
+        if num <= self.range[0] or num >= self.range[1]:
+            pass
+
+    def get_beat(self, ent):
+        txt = ent.widget.get()
+        try:
+            entry_num = abs(int(txt))
+            if self.range[0] <= entry_num <= self.range[1]:
+                self.get = entry_num
+                self.q.put(entry_num)
+            else:
+                ent.widget.delete(0, 'all_lines')
+        except ValueError:
+            ent.widget.delete(0, 'all_lines')
 
 
 if __name__ == "__main__":
