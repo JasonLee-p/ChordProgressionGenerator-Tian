@@ -19,12 +19,16 @@ own_path = os.path.dirname(__file__)
 
 
 def set_window(window):
+    """
+    initialize the window, set the window size, title, icon, etc.
+    :param window: tk.Tk() object.
+    """
     ctypes.windll.shcore.SetProcessDpiAwareness(1)  # 告诉操作系统使用程序自身的dpi适配
     ScaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0)  # 获取屏幕的缩放因子
     window.tk.call('tk', 'scaling', ScaleFactor / 75)  # 设置程序缩放
     try:
         window.state("zoomed")
-    except:
+    except tk.TclError:
         w = window.winfo_screenwidth()
         h = window.winfo_screenheight()
         window.geometry("%dx%d" % (w, h))
@@ -73,6 +77,7 @@ def button(master, expand, belonging, hit_func, text, side, width):
     b.pack(side=side, padx=5, pady=4, expand=expand)
     if belonging:
         belonging.append(b)
+    return b
 
 
 # 定义下拉选择框
@@ -155,6 +160,9 @@ def treeview_sort_column(treeview, column, reverse):  # Treeview、列名、排�
 
 
 class PianoRollCV:
+    """
+    Piano roll Canvas, which shows the generated chord progressions.
+    """
     def __init__(self, master):
         self.MouseState = 'out'
         self.piano_keys_frames = []
@@ -266,33 +274,46 @@ class PianoRollCV:
 
 
 class CPGCanvas:
+    """
+    """
     def __init__(self, master):
         self.cv = tk.Canvas(master=master, bg="ivory", bd=0)
+        self.cv.configure(highlightthickness=0)
         self.cv.bind('<Button-1>', self.onLeftButtonDown)
         self.cv.bind('<B1-Motion>', self.onLeftButtonMove)
         self.cv.bind('<ButtonRelease-1>', self.onLeftButtonUp)
         self.cv.bind('<ButtonRelease-3>', self.onRightButtonUp)
         self.cv.pack(fill='both', expand=True, pady=15, padx=15)
         self.LButtonState = tk.IntVar(value=0)
-        self.X = tk.IntVar(value=0)
-        self.Y = tk.IntVar(value=0)
+        self.X = tk.IntVar(value=45)
+        self.Y = tk.IntVar(value=self.cv.winfo_height()-45)
+        self.line_num = 0
         self.T = 5
         self.LINE_COLOR = 'black'
+        self.L_width = 3
         self.lastline = 0
-        self.all_lines = []
+        self.freshness_lines = []
+        self.tension_lines = []
         self.size = "20"
-        self.Mode = 'dot'
+        self.Mode = 'Main'
 
     def onLeftButtonDown(self, ent):
         # print("c")
-        self.LButtonState.set(1)
-        self.X.set(ent.x)
-        if self.cv.winfo_height() - 45 > ent.y > 45:
-            self.Y.set(ent.y)
-        elif ent.y > self.cv.winfo_height() - 45:
-            self.Y.set(self.cv.winfo_height() - 45)
-        elif ent.y < 45:
-            self.Y.set(45)
+        if ent.x < 45 and 45 < ent.y < self.cv.winfo_height()-45 and self.line_num < 2:
+            self.line_num += 1
+            self.LButtonState.set(1)
+            self.X.set(ent.x)
+            if self.cv.winfo_height() - 45 > ent.y > 45:
+                self.Y.set(ent.y)
+            elif ent.y > self.cv.winfo_height() - 45:
+                self.Y.set(self.cv.winfo_height() - 45)
+            elif ent.y < 45:
+                self.Y.set(45)
+        elif self.X.get() < ent.x < self.cv.winfo_width() - 45:
+            pass
+        elif ent.x < 45 and 45 < ent.y < self.cv.winfo_height() - 45 and self.line_num == 2:
+            messagebox.showinfo("", "You have created two lines.\nIf unsatisfied, you can press 'Clear' and redraw.",
+                                parent=self.cv)
 
     def onLeftButtonMove(self, ent):
         if self.LButtonState.get() == 0:
@@ -304,45 +325,70 @@ class CPGCanvas:
             #     pass
             self.cv.delete(self.lastline)
             self.lastline = self.cv.create_line(
-                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+                self.X.get(), self.Y.get(), ent.x, ent.y,
+                fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
         elif ent.x > self.X.get() and self.T >= 6:
-            if ent.x < self.cv.winfo_width() - 45:
+            if ent.x < self.cv.winfo_width() - 45:  # 在结束区域之前
                 if self.cv.winfo_height() - 45 > ent.y > 45:
                     self.lastline = self.cv.create_line(
-                        self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+                        self.X.get(), self.Y.get(), ent.x, ent.y,
+                        fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
                     self.Y.set(ent.y)
-                elif ent.y > self.cv.winfo_height() - 45:
+                elif ent.y > self.cv.winfo_height() - 45:  # 在结束区域
                     self.lastline = self.cv.create_line(
                         self.X.get(), self.Y.get(), ent.x, self.cv.winfo_height() - 45,
-                        fill=self.LINE_COLOR, width=4, tags='draw')
+                        fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
                     self.Y.set(self.cv.winfo_height() - 45)
                 elif ent.y < 45:
                     self.lastline = self.cv.create_line(
-                        self.X.get(), self.Y.get(), ent.x, 45, fill=self.LINE_COLOR, width=3,
-                        tags='draw')
+                        self.X.get(), self.Y.get(), ent.x, 45,
+                        fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
                     self.Y.set(45)
                 self.X.set(ent.x)
             else:
                 self.lastline = self.cv.create_line(
-                    self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+                    self.X.get(), self.Y.get(), ent.x, ent.y,
+                    fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
                 self.LButtonState.set(0)
-            self.all_lines.append(self.lastline)
+            self.freshness_lines.append(self.lastline) if self.line_num == 1 \
+                else self.tension_lines.append(self.lastline)
             self.T = 0
         self.T += 1
         # print(f"{self.X.get()}, {self.Y.get()}")
 
     def onLeftButtonUp(self, ent):
-        if self.X.get() < ent.x < self.cv.winfo_width() - 45:
-            self.lastline = self.cv.create_line(
-                self.X.get(), self.Y.get(), ent.x, ent.y, fill=self.LINE_COLOR, width=3, tags='draw')
+        """
+        鼠标左键抬起，绘制最后一条线，将鼠标状态置为0
+        """
+        if self.X.get() < ent.x < self.cv.winfo_width() - 45 and self.LButtonState.get():
+            if 45 > ent.y > self.cv.winfo_height() - 45:
+                self.lastline = self.cv.create_line(
+                    self.X.get(), self.Y.get(), ent.x, ent.y,
+                    fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
+                self.Y.set(self.cv.winfo_height() - 45)
+            elif ent.y > self.cv.winfo_height() - 45:
+                self.lastline = self.cv.create_line(
+                    self.X.get(), self.Y.get(), ent.x, self.cv.winfo_height() - 45,
+                    fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
+                self.Y.set(self.cv.winfo_height() - 45)
+            elif ent.y < 45:
+                self.lastline = self.cv.create_line(
+                    self.X.get(), self.Y.get(), ent.x, 45,
+                    fill=self.LINE_COLOR, width=self.L_width, tags=f'draw{self.line_num}')
+            self.X.set(ent.x)
+            self.freshness_lines.append(self.lastline) if self.line_num == 1 \
+                else self.tension_lines.append(self.lastline)
+        elif ent.x > self.cv.winfo_width() and self.LButtonState.get():
             self.LButtonState.set(0)
-            self.all_lines.append(self.lastline)
 
     def onRightButtonUp(self, ent):
         pass
 
 
 class EntryBoxMouseWheel:
+    """
+    可以鼠标滚动控制值的输入框，用于输入整数
+    """
     def __init__(self, master, belonging, position, font, width, default,
                  setRange: list, touch_func=None, msWheel_func=None, _queue=None):
         self.get = default
